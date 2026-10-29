@@ -51,7 +51,8 @@ def lex(texto: str) -> list[Token]:
                 anterior = tokens[-1]
                 tokens[-1] = Token(TEXTO, anterior.valor + trecho, anterior.linha)
             else:
-                tokens.append(Token(TEXTO, trecho, linha))
+                prefixo = trecho[:len(trecho) - len(trecho.lstrip())]
+                tokens.append(Token(TEXTO, trecho, linha + prefixo.count("\n")))
         linha += trecho.count("\n")
         i = j
 
