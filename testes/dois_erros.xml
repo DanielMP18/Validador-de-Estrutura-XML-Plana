@@ -1,0 +1,5 @@
+<produtos>
+ <item><id>PROD001</id><qtd>1</qtd></item>
+ <item><id>PROD002</id><preco>1.00</preco><qtd>1</qtd></item>
+ <item></item>
+</produtos>
