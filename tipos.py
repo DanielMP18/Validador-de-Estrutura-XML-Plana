@@ -6,21 +6,21 @@ def simbolo(c):
         return "0"
     if "1" <= c <= "9":
         return "1-9"
-    return c  # letras, '.', espaços etc. ficam como estão
+    return c
 
 
-def rodar_afd(tabela, inicial, finais, s):
+def rodar_afd(transicoes, inicial, finais, s):
     estado = inicial
     for c in s:
         chave = (estado, simbolo(c))
-        if chave not in tabela:
+        if chave not in transicoes:
             return False
-        estado = tabela[chave]
+        estado = transicoes[chave]
     return estado in finais
 
 
-# id: PROD + 3 dígitos, exceto 000
-TABELA_ID = {
+# id: PROD001 até PROD999
+TRANSICOES_ID = {
     ("q0", "P"): "q1",
     ("q1", "R"): "q2",
     ("q2", "O"): "q3",
@@ -31,10 +31,11 @@ TABELA_ID = {
     ("z2", "1-9"): "fim",
     ("n2", "0"): "fim", ("n2", "1-9"): "fim",
 }
+INICIAL_ID = "q0"
 FINAIS_ID = {"fim"}
 
-# preco: sem zero à esquerda, exatamente 2 casas, mínimo 0.01
-TABELA_PRECO = {
+# preco: 2 casas decimais, mínimo 0.01, sem zero à esquerda
+TRANSICOES_PRECO = {
     ("q0", "0"): "zero",   ("q0", "1-9"): "int",
     ("int", "0"): "int",   ("int", "1-9"): "int",
     ("int", "."): "ponto",
@@ -44,26 +45,28 @@ TABELA_PRECO = {
     ("zponto", "0"): "z0", ("zponto", "1-9"): "d1",
     ("z0", "1-9"): "fim",
 }
+INICIAL_PRECO = "q0"
 FINAIS_PRECO = {"fim"}
 
-# qtd: um ou mais dígitos (aceita 0 e zero à esquerda, sem sinal)
-TABELA_QTD = {
+# qtd: inteiro sem sinal
+TRANSICOES_QTD = {
     ("q0", "0"): "num",  ("q0", "1-9"): "num",
     ("num", "0"): "num", ("num", "1-9"): "num",
 }
+INICIAL_QTD = "q0"
 FINAIS_QTD = {"num"}
 
 
-def validar_id(s: str) -> bool:
-    return rodar_afd(TABELA_ID, "q0", FINAIS_ID, s)
+def validar_id(s):
+    return rodar_afd(TRANSICOES_ID, INICIAL_ID, FINAIS_ID, s)
 
 
-def validar_preco(s: str) -> bool:
-    return rodar_afd(TABELA_PRECO, "q0", FINAIS_PRECO, s)
+def validar_preco(s):
+    return rodar_afd(TRANSICOES_PRECO, INICIAL_PRECO, FINAIS_PRECO, s)
 
 
-def validar_qtd(s: str) -> bool:
-    return rodar_afd(TABELA_QTD, "q0", FINAIS_QTD, s)
+def validar_qtd(s):
+    return rodar_afd(TRANSICOES_QTD, INICIAL_QTD, FINAIS_QTD, s)
 
 
 def validar_tipos(itens):
@@ -73,6 +76,18 @@ def validar_tipos(itens):
               and validar_preco(item.preco.valor)
               and validar_qtd(item.qtd.valor))
         if not ok:
-            erros.append(Erro(linha=item.linha, categoria=TIPO,
-                              mensagem=f"Tipo de dados inválido em {item.trecho}."))
+            erros.append(Erro(item.linha, TIPO,
+                              f"Tipo de dados inválido em {item.trecho}."))
     return erros
+
+
+def detalhar(item):
+    """Diz quais campos falharam. Só para o relatório."""
+    ruins = []
+    if not validar_id(item.id.valor):
+        ruins.append(f"id={item.id.valor!r} (linha {item.id.linha})")
+    if not validar_preco(item.preco.valor):
+        ruins.append(f"preco={item.preco.valor!r} (linha {item.preco.linha})")
+    if not validar_qtd(item.qtd.valor):
+        ruins.append(f"qtd={item.qtd.valor!r} (linha {item.qtd.linha})")
+    return "campos inválidos: " + ", ".join(ruins) if ruins else ""
