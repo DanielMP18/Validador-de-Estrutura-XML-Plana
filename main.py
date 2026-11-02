@@ -1,19 +1,21 @@
 import argparse
 from pathlib import Path
-
+from tipos import validar_tipos
 from contrato import Erro, VAZIO, formatar_erro
 from estrutura import validar_estrutura
 from lexer import lex
 
 
 def validar(texto: str) -> list[Erro]:
-    """Executa as etapas disponíveis. A validação de tipos ainda será integrada."""
-    if not texto.strip():
+    tokens = lex(texto)
+
+    if not tokens:
         return [Erro(0, VAZIO, "Arquivo xml vazio")]
 
-    tokens = lex(texto)
-    _, erros = validar_estrutura(tokens)
+    itens, erros_estrutura = validar_estrutura(tokens)
+    erros_tipos = validar_tipos(itens)
 
+    erros = erros_estrutura + erros_tipos
     return sorted(erros, key=lambda erro: erro.linha)
 
 
@@ -47,7 +49,7 @@ def main() -> int:
         print(formatar_erro(erros[0]))
         return 1
 
-    print("Estrutura válida; validação de tipos ainda não integrada.")
+    print("XML válido.")
     return 0
 
 
